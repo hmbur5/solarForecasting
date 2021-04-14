@@ -34,8 +34,8 @@ for i in range(24):
 # convert to rows corresponding to hours rather than columns (so it matches with weather)
 row_data = pd.DataFrame([], columns = ['date_time', 'power generation kwh'])
 for index, row in customer1Data.iterrows():
-    # iterating through hours
-    for i in range(24):
+    # iterating through hours (starting at 1, then to midnight
+    for i in list(range(1,24))+[0]:
         hour = str(i) + ':00'
         date = customer1Data.at[index, 'date']
         date_time_obj = datetime.datetime.strptime(date+' '+hour, '%d/%m/%Y %H:%M')
@@ -46,11 +46,13 @@ for index, row in customer1Data.iterrows():
 
         generation = customer1Data.at[index, hour]
 
-        row_data.append([date_time_str, generation])
+        appending_dataframe = pd.DataFrame([[date_time_str, generation]], columns = ['date_time', 'power generation kwh'])
+
+        row_data = row_data.append(appending_dataframe)
 
 
 # save this data
-row_data.to_csv('data/simplified Wahroonga solar.csv')
+row_data.to_csv('data/simplified Wahroonga solar.csv',index=False)
 
 
 
