@@ -1,28 +1,10 @@
-# to do
-# find way to turn postcodes into location strings (API?) - done
-# implement locName variable in relevant locations - done
-# selecting the correct location name from postcodes with multiple names - done, could be better
-# pulling postcodes from large data sets
-# expanding to be able to do multiple customers
-
 import csv
 import pandas as pd
 import datetime
-import pgeocode as pg 
-## Using pgeocode to translate postcodes to name strings:
-# nomi = pg.Nominatim('AU')
-# frame = nomi.query_postal_code("3168")
-# namestring = frame.place_name  
-#
-# installing: pip install pgeocode
-
-
-#pgeocode global control, setting AU database
-nomi = pg.Nominatim('AU')
 
 # solar data downloaded from https://www.ausgrid.com.au/Industry/Our-Research/Data-to-share/Solar-home-electricity-data
 # opening solar data file, and getting data for customer 1
-with open('Desktop\Monash\\0. 2021\\1. Sem 1\TRC4200\Group Project\Repo\solarForecasting\data\\2012-2013 Solar home electricity data v2.csv', "r") as csv_file: #change back to: data\2012-2013 Solar home electricity data v2.csv
+with open('data/2012-2013 Solar home electricity data v2.csv', "r") as csv_file:
     csv_reader = csv.reader(csv_file, delimiter=',')
     customer1 = []
     for lines in csv_reader:
@@ -33,23 +15,9 @@ with open('Desktop\Monash\\0. 2021\\1. Sem 1\TRC4200\Group Project\Repo\solarFor
             # just add generation data
             if lines[3]=='GG':
                 customer1.append(lines)
-        #will need to expand out from here for more customers
 
 # convert to dataframe
 customer1Data = pd.DataFrame(data=customer1, columns=header)
-#print(customer1[1][2]) change this to pandas data frame, was having issues so used this as proof of concept
-
-#Reading postcode data, creating data frame and isolating location name
-#locPostcode = customer1data.loc[1,"Postcode"] # semihardcoded for customer 1, will need to introduce variation - see above
-locPostcode = customer1[1][2] #not the best method, see print line comment
-locData = nomi.query_postal_code(locPostcode) 
-locName = locData.place_name
-print(locName)
-
-# splitting in case of multiple locations in same postcode
-chunks = locName.split(',')
-locName = chunks[0]
-print(locName)
 
 # convert generation data to hourly rather than half hourly (so it matches with weather)
 for i in range(24):
@@ -84,7 +52,7 @@ for index, row in customer1Data.iterrows():
 
 
 # save this data
-row_data.to_csv('Desktop\Monash\\0. 2021\\1. Sem 1\TRC4200\Group Project\Repo\solarForecasting\data\simplified Wahroonga solar.csv',index=False) #change back to: data\simplified Wahroonga solar.csv
+row_data.to_csv('data/simplified Wahroonga solar.csv',index=False)
 
 
 
@@ -94,7 +62,7 @@ row_data.to_csv('Desktop\Monash\\0. 2021\\1. Sem 1\TRC4200\Group Project\Repo\so
 # use api to download historical weather data from the same place and time
 from WorldWeatherPy import HistoricalLocationWeather
 api_key = 'f2f090e1b01d4d7ea1435335211404'
-city = locName
+city = 'Wahroonga'
 start_date = '2012-07-01'
 end_date = '2013-6-30'
 frequency = 1 # hourly frequency
@@ -116,4 +84,4 @@ del dataset['WindChillC']
 del dataset['WindGustKmph']
 
 # save data
-dataset.to_csv('Desktop\Monash\\0. 2021\\1. Sem 1\TRC4200\Group Project\Repo\solarForecasting\data\simplified Wahroonga weather.csv') #swap back to: data\simplified Wahroonga weather.csv
+dataset.to_csv('data/simplified Wahroonga weather.csv')
