@@ -2,10 +2,11 @@ import csv
 import pandas as pd
 import datetime
 import pgeocode as pg
+import numpy as np
 from WorldWeatherPy import HistoricalLocationWeather
 # weather data from https://www.worldweatheronline.com/developer/api/docs/historical-weather-api.aspx
 # use api to download historical weather data from the same place and time
-api_key = 'd901813a0ad147ca829234002210505'
+api_key = 'a4e8b13df3d34c208ea22145210605'
 
 #pgeocode global control, setting AU database
 nomi = pg.Nominatim('AU')
@@ -13,6 +14,13 @@ nomi = pg.Nominatim('AU')
 # solar data downloaded from https://www.ausgrid.com.au/Industry/Our-Research/Data-to-share/Solar-home-electricity-data
 # opening solar data file, and getting data for customer 1
 customerDict = {}
+# load customer locations dictionary
+try:
+    customer_locations = np.load('data/customer_locations.npy',allow_pickle='TRUE').item()
+except Exception as e:
+    print(e)
+    customer_locations = {}
+
 with open('data/2012-2013 Solar home electricity data v2.csv', "r") as csv_file:
     csv_reader = csv.reader(csv_file, delimiter=',')
     for lines in csv_reader:
@@ -51,7 +59,7 @@ for customer in customerDict.keys():
         frequency = 1  # hourly frequency
         # skip over locations that have already been done
         try:
-            with open('data/simplified ' + locName + ' weather.csv', "r") as csv_file:
+            with open('data/simplified ' + customer + ' weather.csv', "r") as csv_file:
                 done=True
                 break
         except FileNotFoundError:
@@ -67,6 +75,7 @@ for customer in customerDict.keys():
 
 
     print(locName)
+    customer_locations[customer] = locName
 
     # convert generation data to hourly rather than half hourly (so it matches with weather)
     for i in range(24):
@@ -101,7 +110,7 @@ for customer in customerDict.keys():
 
 
     # save this data
-    row_data.to_csv('data/simplified '+locName+' solar.csv',index=False)
+    row_data.to_csv('data/simplified '+customer+' solar.csv',index=False)
 
 
 
@@ -126,4 +135,7 @@ for customer in customerDict.keys():
     del dataset['WindGustKmph']
 
     # save data
-    dataset.to_csv('data/simplified '+ locName +' weather.csv')
+    dataset.to_csv('data/simplified '+ customer +' weather.csv')
+
+    # save customer locations to file
+    np.save('data/customer_locations.npy', customer_locations)

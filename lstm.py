@@ -35,20 +35,26 @@ locations = []
 for filename in os.listdir(directory):
     if filename.endswith("weather.csv"):
         filename = filename.replace('simplified ', '')
-        locations.append(filename.replace(' weather.csv',''))
+        filename = filename.replace(' weather.csv', '')
+        try:
+            int(filename)
+        except:
+            continue
+        else:
+            locations.append(int(filename))
     else:
         continue
 
-first_input_sequences = np.empty((0,72,9))
+first_input_sequences = np.empty((0,1,1))
 second_input_sequences = np.empty((0,24,8))
 output_sequences = np.empty((0,24,1))
 days_sequences = []
 
-for location in locations[0:2]:
+for location in locations:
 
     # splitting data up into days so we can simply predict the solar generation on a given day
     days = []
-    with open("data/simplified "+location+" solar.csv", 'r') as csvfile:
+    with open("data/simplified "+str(location)+" solar.csv", 'r') as csvfile:
         reader = csv.reader(csvfile, delimiter=',')
         next(reader)
         for row in reader:
@@ -58,7 +64,7 @@ for location in locations[0:2]:
 
     # get input from weather data
     input_sequence = np.empty((len(days),24,8), dtype=np.float64)
-    with open("data/simplified "+location+" weather.csv", 'r') as csvfile:
+    with open("data/simplified "+str(location)+" weather.csv", 'r') as csvfile:
         reader = csv.reader(csvfile, delimiter=',')
         next(reader)
         for row in reader:
@@ -82,7 +88,7 @@ for location in locations[0:2]:
 
 
     output_sequence = np.empty((len(days),24,1), dtype=np.float64)
-    with open("data/simplified "+location+" solar.csv", 'r') as csvfile:
+    with open("data/simplified "+str(location)+" solar.csv", 'r') as csvfile:
         reader = csv.reader(csvfile, delimiter=',')
         next(reader)
         for row in reader:
@@ -103,33 +109,22 @@ for location in locations[0:2]:
     output_sequence = output_sequence[indices]
     days = np.array(days)[indices]
 
-    # first input sequences is an array of weather data and solar output for 50 random days
-    example_data = np.empty((1,24*50, input_sequence.shape[-1]+1))
-    remaining_indices = list(range(len(input_sequence)))
-    example_days = random.sample(range(len(input_sequence)),50)
-    # remove these 50 example days from the historic training data
-    for index,day in enumerate(example_days):
-        for hour in range(0,24):
-            example_data[0,index*hour+hour]=np.append(input_sequence[day][hour],output_sequence[day][hour])
-        remaining_indices.remove(day)
-    # add 3 samples of example data as an element to first input sequence for each of the remaining days
-    for example_index in range(len(remaining_indices)):
-        sample_indices = random.sample(range(50),3)
-        example_sample = np.empty((1,72,input_sequence.shape[-1]+1))
-        for sample_index1, sample_index2 in enumerate(sample_indices):
-            example_sample[0,sample_index1:sample_index1+24,:] = example_data[0,sample_index2:sample_index2+24,:]
-        first_input_sequences = np.append(first_input_sequences, example_sample, axis=0)
+    # first input sequence is simply the location index. add for each day
+    customer_number = np.empty((1,1,1))
+    customer_number[0,0,0] = location
+    for day in days:
+        first_input_sequences = np.append(first_input_sequences, customer_number, axis=0)
 
-    input_sequence = np.array(input_sequence)[remaining_indices]
-    output_sequence = np.array(output_sequence)[remaining_indices]
-    days = np.array(days)[remaining_indices]
+    input_sequence = np.array(input_sequence)
+    output_sequence = np.array(output_sequence)
+    days = np.array(days)
 
 
     second_input_sequences = np.append(second_input_sequences, input_sequence, axis=0)
     output_sequences = np.append(output_sequences, output_sequence, axis=0)
     day_customer = []
     for day in days:
-        day_customer.append(str(day)+' '+ location)
+        day_customer.append(str(day)+' Customer '+ str(location))
     days_sequences+=day_customer
     print(location)
 
@@ -147,21 +142,27 @@ print(np.shape(output_sequences))
 print(np.shape(days_sequences))
 
 
-# normalise (should only normalise in terms of the train data, but leaving for now)
-scaler = MinMaxScaler(feature_range=(0, 1))
-for i in range(first_input_sequences.shape[1]):
-    scaler = scaler.fit(first_input_sequences[:, i, :])
-    first_input_sequences[:, i, :] = scaler.transform(first_input_sequences[:, i, :])
-scaler1 = MinMaxScaler(feature_range=(0, 1))
-for i in range(second_input_sequences.shape[1]):
-    scaler1 = scaler1.fit(second_input_sequences[:, i, :])
-    second_input_sequences[:, i, :] = scaler1.transform(second_input_sequences[:, i, :])
+# get training data to use for normalising
+training_portion = np.float64(0.8)
+train_size = int(len(days_sequences) * training_portion)
+train_input_historic = first_input_sequences[0: train_size]
+train_input_weather = second_input_sequences[0: train_size]
+train_output = output_sequences[0: train_size]
+
+# normalise based on training data, but apply to all data
+scaler1s = [MinMaxScaler(feature_range=(0, 1))]*second_input_sequences.shape[2]
+for i in range(second_input_sequences.shape[2]):
+    scaler1 = scaler1s[i]
+    scaler1 = scaler1.fit(train_input_weather[:, :, i])
+    scaler1s[i] = scaler1
+    second_input_sequences[:, :, i] = scaler1.transform(second_input_sequences[:, :, i])
+    # save scalers to file
+    np.save('training/scaler1'+str(i)+'.npy', scaler1)
 scaler2 = MinMaxScaler(feature_range=(0, 1))
-for i in range(output_sequences.shape[1]):
-    scaler2 = scaler2.fit(output_sequences[:, i, :])
-    output_sequences[:, i, :] = scaler2.transform(output_sequences[:, i, :])
+scaler2 = scaler2.fit(train_output[:, :, 0])
+output_sequences[:, :, 0] = scaler2.transform(output_sequences[:, :, 0])
 
-
+np.save('training/scaler2.npy', scaler2)
 
 # split days into training and testing
 training_portion = np.float64(0.8)
@@ -169,23 +170,23 @@ train_size = int(len(days_sequences) * training_portion)
 train_input_historic = first_input_sequences[0: train_size]
 train_input_weather = second_input_sequences[0: train_size]
 train_output = output_sequences[0: train_size]
-validation_input_historic = first_input_sequences[train_size:-4]
-validation_input_weather = second_input_sequences[train_size:-4]
-validation_output = output_sequences[train_size:-4]
-test_input_historic = first_input_sequences[-4:]
-test_input_weather = second_input_sequences[-4:]
-test_output = output_sequences[-4:]
-test_days = days_sequences[-4:]
+validation_input_historic = first_input_sequences[train_size:-6]
+validation_input_weather = second_input_sequences[train_size:-6]
+validation_output = output_sequences[train_size:-6]
+test_input_historic = first_input_sequences[-6:]
+test_input_weather = second_input_sequences[-6:]
+test_output = output_sequences[-6:]
+test_days = days_sequences[-6:]
 
 print(np.shape(train_input_historic))
 
-# create callback to save model weights each time its trained (helps stability)
+# create callback to save model weights each time its trained (for deployment)
 cp_callback = ModelCheckpoint(filepath='training/cp.ckpt',
                                                 save_best_only=True,
                                                  verbose=1)
 
 # define model
-encoder_input = Input(shape=(72,9))
+encoder_input = Input(shape=(1,1))
 forecast_input = Input(shape=(24,8))
 encoder_layer_1 = LSTM(20, activation='relu', kernel_initializer=Orthogonal())
 encoder_hidden_output = encoder_layer_1(encoder_input)
@@ -201,11 +202,9 @@ outputs = TimeDistributed(Dense(1))(dense_output)
 model = Model(inputs=[encoder_input, forecast_input], outputs=outputs, name="model")
 print(model.summary)
 
-# Loads the previous weights
-#model.load_weights('training/cp_good1.ckpt')
 
 model.compile(loss='mse', optimizer='adam')
-num_epochs = 50
+num_epochs = 20
 model.fit([train_input_historic, train_input_weather], train_output, epochs=num_epochs, validation_data=
     ([validation_input_historic, validation_input_weather], validation_output), verbose=2, callbacks=[cp_callback])
 
@@ -214,25 +213,22 @@ model.fit([train_input_historic, train_input_weather], train_output, epochs=num_
 prediction = model.predict([test_input_historic, test_input_weather])
 observation = test_output
 
+# unnormalise
+prediction = scaler2.inverse_transform(prediction[:,:,0])
+observation = scaler2.inverse_transform(observation[:,:,0])
+
 
 max = max([np.max(prediction), np.max(observation)])
 min = min([np.min(prediction), np.min(observation)])
-fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2,2)
-ax1.plot(observation[0])
-ax1.plot(prediction[0])
-ax1.set_title(str(test_days[0]))
-ax1.set_ylim([min,max])
-ax1.legend(['observation', 'prediction'])
-ax2.plot(observation[1])
-ax2.plot(prediction[1])
-ax2.set_title(str(test_days[1]))
-ax2.set_ylim([min,max])
-ax3.plot(observation[2])
-ax3.plot(prediction[2])
-ax3.set_title(str(test_days[2]))
-ax3.set_ylim([min,max])
-ax4.plot(observation[3])
-ax4.plot(prediction[3])
-ax4.set_title(str(test_days[3]))
-ax4.set_ylim([min,max])
+fig, axes = plt.subplots(2,3)
+for i,j in [[0,0],[0,1],[0,2],[1,0],[1,1],[1,2]]:
+    axes[i,j].plot(observation[i*2+j])
+    axes[i,j].plot(prediction[i*2+j])
+    axes[i,j].set_title(str(test_days[i*2+j]))
+    axes[i, j].set_ylabel('kwatt hours')
+    try:
+        axes[i,j].set_ylim([min,max])
+    except ValueError:
+        pass
+axes[0,0].legend(['observation', 'prediction'])
 plt.show()
