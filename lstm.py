@@ -44,7 +44,7 @@ second_input_sequences = np.empty((0,24,8))
 output_sequences = np.empty((0,24,1))
 days_sequences = []
 
-for location in locations[:10]:
+for location in locations[0:2]:
 
     # splitting data up into days so we can simply predict the solar generation on a given day
     days = []
@@ -103,17 +103,22 @@ for location in locations[:10]:
     output_sequence = output_sequence[indices]
     days = np.array(days)[indices]
 
-    # first input sequences is an array of weather data and solar output for 3 random days
-    example_data = np.empty((1,72, input_sequence.shape[-1]+1))
+    # first input sequences is an array of weather data and solar output for 50 random days
+    example_data = np.empty((1,24*50, input_sequence.shape[-1]+1))
     remaining_indices = list(range(len(input_sequence)))
-    example_days = random.sample(range(len(input_sequence)),3)
+    example_days = random.sample(range(len(input_sequence)),50)
+    # remove these 50 example days from the historic training data
     for index,day in enumerate(example_days):
         for hour in range(0,24):
             example_data[0,index*hour+hour]=np.append(input_sequence[day][hour],output_sequence[day][hour])
         remaining_indices.remove(day)
-    # add exampple data as an element to first input sequence for each of the remaining days
-    for _ in range(len(remaining_indices)):
-        first_input_sequences = np.append(first_input_sequences, example_data, axis=0)
+    # add 3 samples of example data as an element to first input sequence for each of the remaining days
+    for example_index in range(len(remaining_indices)):
+        sample_indices = random.sample(range(50),3)
+        example_sample = np.empty((1,72,input_sequence.shape[-1]+1))
+        for sample_index1, sample_index2 in enumerate(sample_indices):
+            example_sample[0,sample_index1:sample_index1+24,:] = example_data[0,sample_index2:sample_index2+24,:]
+        first_input_sequences = np.append(first_input_sequences, example_sample, axis=0)
 
     input_sequence = np.array(input_sequence)[remaining_indices]
     output_sequence = np.array(output_sequence)[remaining_indices]
@@ -174,15 +179,20 @@ test_days = days_sequences[-4:]
 
 print(np.shape(train_input_historic))
 
+# create callback to save model weights each time its trained (helps stability)
+cp_callback = ModelCheckpoint(filepath='training/cp.ckpt',
+                                                save_best_only=True,
+                                                 verbose=1)
+
 # define model
 encoder_input = Input(shape=(72,9))
 forecast_input = Input(shape=(24,8))
-encoder_layer_1 = LSTM(200, activation='relu', kernel_initializer=Orthogonal())
+encoder_layer_1 = LSTM(20, activation='relu', kernel_initializer=Orthogonal())
 encoder_hidden_output = encoder_layer_1(encoder_input)
 decoder_input = RepeatVector(24)(encoder_hidden_output)
 decoder_input = Dropout(0.2)(decoder_input)
 decoder_input = Concatenate(axis=2)([decoder_input, forecast_input])
-decoder_layer = LSTM(200, activation='relu', return_sequences=True, kernel_initializer=Orthogonal())
+decoder_layer = LSTM(20, activation='relu', return_sequences=True, kernel_initializer=Orthogonal())
 decoder_output = decoder_layer(decoder_input)
 dense_input = Dropout(0.2)(decoder_output)
 dense_layer = TimeDistributed(Dense(100, activation='relu'))
@@ -191,10 +201,13 @@ outputs = TimeDistributed(Dense(1))(dense_output)
 model = Model(inputs=[encoder_input, forecast_input], outputs=outputs, name="model")
 print(model.summary)
 
+# Loads the previous weights
+#model.load_weights('training/cp_good1.ckpt')
+
 model.compile(loss='mse', optimizer='adam')
 num_epochs = 50
-history = model.fit([train_input_historic, train_input_weather], train_output, epochs=num_epochs, validation_data=([validation_input_historic, validation_input_weather], validation_output), verbose=2)
-
+model.fit([train_input_historic, train_input_weather], train_output, epochs=num_epochs, validation_data=
+    ([validation_input_historic, validation_input_weather], validation_output), verbose=2, callbacks=[cp_callback])
 
 
 # using testing data to plot some days
