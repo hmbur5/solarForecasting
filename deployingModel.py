@@ -64,7 +64,7 @@ location = customer_locations[str(customer_no)]
 
 # customer number is input 1
 customer_number = np.empty((1,1))
-customer_number[0,0] = 1
+customer_number[0,0] = customer_no
 
 # get forecast weather
 weather_forecast = np.empty((24,8))
