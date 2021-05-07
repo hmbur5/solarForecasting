@@ -1,34 +1,15 @@
-import csv
-import tensorflow as tf
-import numpy as np
-from sklearn.preprocessing import MinMaxScaler
-import matplotlib.pyplot as plt
-import random
 from datetime import datetime
 from datetime import timedelta
-import pandas as pd
 import numpy as np
-from math import sqrt
-from sklearn.metrics import mean_squared_error
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from matplotlib import pyplot as plt
 from keras.layers import Dense
-from keras.layers import Flatten
 from keras.layers import LSTM
 from keras.layers import RepeatVector
-from keras.layers import TimeDistributed, Dropout, MaxPooling1D, AveragePooling1D
-from keras import regularizers
+from keras.layers import TimeDistributed, Dropout
 from keras import Input
 from keras import Model
 from keras.layers import Concatenate
-from keras.optimizers import adam
-from keras.callbacks import EarlyStopping, ModelCheckpoint, TerminateOnNaN
-from keras import models
-import pickle
-import random
-from math import floor, ceil
 from keras.initializers import Orthogonal
-import os
 from WorldWeatherPy import HistoricalLocationWeather
 
 # weather data from https://www.worldweatheronline.com/developer/api/docs/historical-weather-api.aspx
