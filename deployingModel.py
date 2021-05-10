@@ -18,7 +18,7 @@ api_key = 'a4e8b13df3d34c208ea22145210605'
 
 
 # define model
-encoder_input = Input(shape=(1,1))
+encoder_input = Input(shape=(1,2))
 forecast_input = Input(shape=(24,8))
 encoder_layer_1 = LSTM(20, activation='relu', kernel_initializer=Orthogonal())
 encoder_hidden_output = encoder_layer_1(encoder_input)
@@ -40,12 +40,14 @@ model.load_weights('training/cp.ckpt')
 
 # testing on a location
 customer_locations = np.load('data/customer_locations.npy',allow_pickle='TRUE').item()
+customer_capacity = np.load('data/customer_capacity.npy',allow_pickle='TRUE').item()
 customer_no = 1
 location = customer_locations[str(customer_no)]
 
-# customer number is input 1
-customer_number = np.empty((1,1))
+# customer number and capacity is input 1
+customer_number = np.empty((1,2))
 customer_number[0,0] = customer_no
+customer_number[0,1] = customer_capacity[str(customer_no)]
 
 # get forecast weather
 weather_forecast = np.empty((24,8))
@@ -71,12 +73,15 @@ for hour in range(24):
 
 
 
-input_1 = np.empty((1,1,1))
+input_1 = np.empty((1,1,2))
 input_1[0,:,:] = customer_number
 input_2 = np.empty((1,24,8))
 input_2[0,:,:] = weather_forecast
 
 # normalise
+for i in range(input_1.shape[2]):
+    scaler0 = np.load('training/scaler0'+str(i)+'.npy', allow_pickle='TRUE').item()
+    input_1[:, :, i] = scaler0.transform(input_1[:, :, i])
 for i in range(input_2.shape[2]):
     scaler1 = np.load('training/scaler1'+str(i)+'.npy', allow_pickle='TRUE').item()
     input_2[:, :, i] = scaler1.transform(input_2[:, :, i])

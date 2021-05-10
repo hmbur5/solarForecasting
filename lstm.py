@@ -31,8 +31,9 @@ for filename in os.listdir(directory):
             locations.append(int(filename))
     else:
         continue
+customer_capacity = np.load('data/customer_capacity.npy',allow_pickle='TRUE').item()
 
-first_input_sequences = np.empty((0,1,1))
+first_input_sequences = np.empty((0,1,2))
 second_input_sequences = np.empty((0,24,8))
 output_sequences = np.empty((0,24,1))
 days_sequences = []
@@ -96,9 +97,10 @@ for location in locations:
     output_sequence = output_sequence[indices]
     days = np.array(days)[indices]
 
-    # first input sequence is simply the location index. add for each day
-    customer_number = np.empty((1,1,1))
+    # first input sequence is the customer index and solar panel capacity. add for each day
+    customer_number = np.empty((1,1,2))
     customer_number[0,0,0] = location
+    customer_number[0,0,1] = customer_capacity[str(location)]
     for day in days:
         first_input_sequences = np.append(first_input_sequences, customer_number, axis=0)
 
@@ -137,6 +139,14 @@ train_input_weather = second_input_sequences[0: train_size]
 train_output = output_sequences[0: train_size]
 
 # normalise based on training data, but apply to all data
+scaler0s = [MinMaxScaler(feature_range=(0, 1))]*first_input_sequences.shape[2]
+for i in range(first_input_sequences.shape[2]):
+    scaler0 = scaler0s[i]
+    scaler0 = scaler0.fit(train_input_historic[:, :, i])
+    scaler0s[i] = scaler0
+    first_input_sequences[:, :, i] = scaler0.transform(first_input_sequences[:, :, i])
+    # save scalers to file
+    np.save('training/scaler0'+str(i)+'.npy', scaler0)
 scaler1s = [MinMaxScaler(feature_range=(0, 1))]*second_input_sequences.shape[2]
 for i in range(second_input_sequences.shape[2]):
     scaler1 = scaler1s[i]
@@ -173,7 +183,7 @@ cp_callback = ModelCheckpoint(filepath='training/cp.ckpt',
                                                  verbose=1)
 
 # define model
-encoder_input = Input(shape=(1,1))
+encoder_input = Input(shape=(1,2))
 forecast_input = Input(shape=(24,8))
 encoder_layer_1 = LSTM(20, activation='relu', kernel_initializer=Orthogonal())
 encoder_hidden_output = encoder_layer_1(encoder_input)
@@ -191,7 +201,7 @@ print(model.summary)
 
 
 model.compile(loss='mse', optimizer='adam')
-num_epochs = 20
+num_epochs = 100
 model.fit([train_input_historic, train_input_weather], train_output, epochs=num_epochs, validation_data=
     ([validation_input_historic, validation_input_weather], validation_output), verbose=2, callbacks=[cp_callback])
 

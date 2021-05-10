@@ -12,7 +12,7 @@ api_key = 'a4e8b13df3d34c208ea22145210605'
 nomi = pg.Nominatim('AU')
 
 # solar data downloaded from https://www.ausgrid.com.au/Industry/Our-Research/Data-to-share/Solar-home-electricity-data
-# opening solar data file, and getting data for customer 1
+# opening solar data file, and getting data for customers
 customerDict = {}
 # load customer locations dictionary
 try:
@@ -21,9 +21,13 @@ except Exception as e:
     print(e)
     customer_locations = {}
 
+customer_capacity = {}
+
 with open('data/2012-2013 Solar home electricity data v2.csv', "r") as csv_file:
     csv_reader = csv.reader(csv_file, delimiter=',')
     for lines in csv_reader:
+        if '2012-2013 Solar' in lines[0]:
+            continue
         if lines[0] == 'Customer':
             header = lines
         else:
@@ -33,6 +37,11 @@ with open('data/2012-2013 Solar home electricity data v2.csv', "r") as csv_file:
                     customerDict[lines[0]].append(lines)
                 except KeyError:
                     customerDict[lines[0]] = [lines]
+            try:
+                customer_capacity[lines[0]]
+            except KeyError:
+                customer_capacity[lines[0]]= lines[1]
+                np.save('data/customer_capacity.npy', customer_capacity)
 
 for customer in customerDict.keys():
     customerList = customerDict[customer]
@@ -46,6 +55,7 @@ for customer in customerDict.keys():
     locPostcode = customerList[1][2] #not the best method, see print line comment
     locData = nomi.query_postal_code(locPostcode)
     locName = locData.place_name
+
 
     # splitting in case of multiple locations in same postcode
     chunks = locName.split(', ')
@@ -70,12 +80,13 @@ for customer in customerDict.keys():
             print(locName)
         else:
             break
-    if done==True:
-        continue
-
 
     print(locName)
     customer_locations[customer] = locName
+
+    if done==True:
+        continue
+
 
     # convert generation data to hourly rather than half hourly (so it matches with weather)
     for i in range(24):
