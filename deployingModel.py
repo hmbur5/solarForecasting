@@ -12,6 +12,7 @@ from keras.layers import Concatenate
 from keras.initializers import Orthogonal
 from WorldWeatherPy import HistoricalLocationWeather
 
+
 # weather data from https://www.worldweatheronline.com/developer/api/docs/historical-weather-api.aspx
 # use api to download historical weather data from the same place and time
 keys = ['f2f090e1b01d4d7ea1435335211404', 'd6c47801209e43a6b2150339211105', 'd901813a0ad147ca829234002210505', 'a4e8b13df3d34c208ea22145210605']
