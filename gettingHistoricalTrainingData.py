@@ -6,7 +6,8 @@ import numpy as np
 from WorldWeatherPy import HistoricalLocationWeather
 # weather data from https://www.worldweatheronline.com/developer/api/docs/historical-weather-api.aspx
 # use api to download historical weather data from the same place and time
-api_key = 'a4e8b13df3d34c208ea22145210605'
+keys = ['f2f090e1b01d4d7ea1435335211404', 'd6c47801209e43a6b2150339211105', 'd901813a0ad147ca829234002210505', 'a4e8b13df3d34c208ea22145210605']
+api_key = keys[0]
 
 #pgeocode global control, setting AU database
 nomi = pg.Nominatim('AU')
@@ -55,6 +56,7 @@ for customer in customerDict.keys():
     locPostcode = customerList[1][2] #not the best method, see print line comment
     locData = nomi.query_postal_code(locPostcode)
     locName = locData.place_name
+    state = locData.state_name
 
 
     # splitting in case of multiple locations in same postcode
@@ -63,7 +65,7 @@ for customer in customerDict.keys():
     for chunk in chunks:
         locName = chunk
         # use api to download historical weather data from the same place and time
-        city = locName.replace(' ', '+')+'+Australia'
+        city = locName.replace(' ', '+')+'+'+state.replace(' ','+')+'+Australia'
         start_date = '2012-07-01'
         end_date = '2013-6-30'
         frequency = 1  # hourly frequency
@@ -81,11 +83,11 @@ for customer in customerDict.keys():
         else:
             break
 
-    print(locName)
-    customer_locations[customer] = locName
-
     if done==True:
         continue
+
+    print(locName)
+    customer_locations[customer] = city
 
 
     # convert generation data to hourly rather than half hourly (so it matches with weather)

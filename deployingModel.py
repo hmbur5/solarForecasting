@@ -14,13 +14,13 @@ from WorldWeatherPy import HistoricalLocationWeather
 
 # weather data from https://www.worldweatheronline.com/developer/api/docs/historical-weather-api.aspx
 # use api to download historical weather data from the same place and time
-api_key = 'a4e8b13df3d34c208ea22145210605'
+api_key = 'f2f090e1b01d4d7ea1435335211404'
 
 
 # define model
-encoder_input = Input(shape=(1,2))
+encoder_input = Input(shape=(1,301))
 forecast_input = Input(shape=(24,8))
-encoder_layer_1 = LSTM(20, activation='relu', kernel_initializer=Orthogonal())
+encoder_layer_1 = LSTM(600, activation='relu', kernel_initializer=Orthogonal())
 encoder_hidden_output = encoder_layer_1(encoder_input)
 decoder_input = RepeatVector(24)(encoder_hidden_output)
 decoder_input = Dropout(0.2)(decoder_input)
@@ -28,7 +28,7 @@ decoder_input = Concatenate(axis=2)([decoder_input, forecast_input])
 decoder_layer = LSTM(20, activation='relu', return_sequences=True, kernel_initializer=Orthogonal())
 decoder_output = decoder_layer(decoder_input)
 dense_input = Dropout(0.2)(decoder_output)
-dense_layer = TimeDistributed(Dense(100, activation='relu'))
+dense_layer = TimeDistributed(Dense(300, activation='relu'))
 dense_output = dense_layer(dense_input)
 outputs = TimeDistributed(Dense(1))(dense_output)
 model = Model(inputs=[encoder_input, forecast_input], outputs=outputs, name="model")
@@ -45,8 +45,8 @@ customer_no = 1
 location = customer_locations[str(customer_no)]
 
 # customer number and capacity is input 1
-customer_number = np.empty((1,2))
-customer_number[0,0] = customer_no
+customer_number = np.zeros((1,301))
+customer_number[0,customer_no-1] = 1
 customer_number[0,1] = customer_capacity[str(customer_no)]
 
 # get forecast weather
@@ -55,8 +55,7 @@ current_day = datetime.today()
 date = current_day.strftime('%Y-%m-%d')
 next_day = current_day+timedelta(days=1)
 end_date = next_day.strftime('%Y-%m-%d')
-city = location+'+Australia'
-dataset = HistoricalLocationWeather(api_key, city, date, end_date, 1).retrieve_hist_data()
+dataset = HistoricalLocationWeather(api_key, location, date, end_date, 1).retrieve_hist_data()
 weather_data = np.array([dataset['uvIndex'],dataset['cloudcover'], dataset['humidity'], dataset['precipMM'],dataset['pressure'],
                      dataset['tempC'], dataset['visibility']])
 weather_data = weather_data[:,0:24].transpose()
@@ -73,15 +72,14 @@ for hour in range(24):
 
 
 
-input_1 = np.empty((1,1,2))
+input_1 = np.empty((1,1,301))
 input_1[0,:,:] = customer_number
 input_2 = np.empty((1,24,8))
 input_2[0,:,:] = weather_forecast
 
 # normalise
-for i in range(input_1.shape[2]):
-    scaler0 = np.load('training/scaler0'+str(i)+'.npy', allow_pickle='TRUE').item()
-    input_1[:, :, i] = scaler0.transform(input_1[:, :, i])
+scaler0 = np.load('training/scaler0.npy', allow_pickle='TRUE').item()
+input_1[:, :, -1] = scaler0.transform(input_1[:, :, -1])
 for i in range(input_2.shape[2]):
     scaler1 = np.load('training/scaler1'+str(i)+'.npy', allow_pickle='TRUE').item()
     input_2[:, :, i] = scaler1.transform(input_2[:, :, i])

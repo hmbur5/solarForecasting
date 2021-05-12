@@ -33,7 +33,7 @@ for filename in os.listdir(directory):
         continue
 customer_capacity = np.load('data/customer_capacity.npy',allow_pickle='TRUE').item()
 
-first_input_sequences = np.empty((0,1,2))
+first_input_sequences = np.empty((0,1,301))
 second_input_sequences = np.empty((0,24,8))
 output_sequences = np.empty((0,24,1))
 days_sequences = []
@@ -97,9 +97,10 @@ for location in locations:
     output_sequence = output_sequence[indices]
     days = np.array(days)[indices]
 
+    # using One Hot Encode Categorical Data to use customer ID
     # first input sequence is the customer index and solar panel capacity. add for each day
-    customer_number = np.empty((1,1,2))
-    customer_number[0,0,0] = location
+    customer_number = np.zeros((1,1,301))
+    customer_number[0,0,location-1] = 1
     customer_number[0,0,1] = customer_capacity[str(location)]
     for day in days:
         first_input_sequences = np.append(first_input_sequences, customer_number, axis=0)
@@ -139,14 +140,11 @@ train_input_weather = second_input_sequences[0: train_size]
 train_output = output_sequences[0: train_size]
 
 # normalise based on training data, but apply to all data
-scaler0s = [MinMaxScaler(feature_range=(0, 1))]*first_input_sequences.shape[2]
-for i in range(first_input_sequences.shape[2]):
-    scaler0 = scaler0s[i]
-    scaler0 = scaler0.fit(train_input_historic[:, :, i])
-    scaler0s[i] = scaler0
-    first_input_sequences[:, :, i] = scaler0.transform(first_input_sequences[:, :, i])
-    # save scalers to file
-    np.save('training/scaler0'+str(i)+'.npy', scaler0)
+scaler0 = MinMaxScaler(feature_range=(0, 1))
+scaler0 = scaler0.fit(train_input_historic[:, :, -1])
+first_input_sequences[:, :, -1] = scaler0.transform(first_input_sequences[:, :, -1])
+# save scalers to file
+np.save('training/scaler0.npy', scaler0)
 scaler1s = [MinMaxScaler(feature_range=(0, 1))]*second_input_sequences.shape[2]
 for i in range(second_input_sequences.shape[2]):
     scaler1 = scaler1s[i]
@@ -162,18 +160,20 @@ output_sequences[:, :, 0] = scaler2.transform(output_sequences[:, :, 0])
 np.save('training/scaler2.npy', scaler2)
 
 # split days into training and testing
-training_portion = np.float64(0.8)
+training_portion = np.float64(0.7)
+test_portion = np.float64(0.1)
 train_size = int(len(days_sequences) * training_portion)
+test_size = int(len(days_sequences) * test_portion)
 train_input_historic = first_input_sequences[0: train_size]
 train_input_weather = second_input_sequences[0: train_size]
 train_output = output_sequences[0: train_size]
-validation_input_historic = first_input_sequences[train_size:-6]
-validation_input_weather = second_input_sequences[train_size:-6]
-validation_output = output_sequences[train_size:-6]
-test_input_historic = first_input_sequences[-6:]
-test_input_weather = second_input_sequences[-6:]
-test_output = output_sequences[-6:]
-test_days = days_sequences[-6:]
+validation_input_historic = first_input_sequences[train_size:-test_size]
+validation_input_weather = second_input_sequences[train_size:-test_size]
+validation_output = output_sequences[train_size:-test_size]
+test_input_historic = first_input_sequences[-test_size:]
+test_input_weather = second_input_sequences[-test_size:]
+test_output = output_sequences[-test_size:]
+test_days = days_sequences[-test_size:]
 
 print(np.shape(train_input_historic))
 
@@ -183,9 +183,9 @@ cp_callback = ModelCheckpoint(filepath='training/cp.ckpt',
                                                  verbose=1)
 
 # define model
-encoder_input = Input(shape=(1,2))
+encoder_input = Input(shape=(1,301))
 forecast_input = Input(shape=(24,8))
-encoder_layer_1 = LSTM(20, activation='relu', kernel_initializer=Orthogonal())
+encoder_layer_1 = LSTM(600, activation='relu', kernel_initializer=Orthogonal())
 encoder_hidden_output = encoder_layer_1(encoder_input)
 decoder_input = RepeatVector(24)(encoder_hidden_output)
 decoder_input = Dropout(0.2)(decoder_input)
@@ -193,7 +193,7 @@ decoder_input = Concatenate(axis=2)([decoder_input, forecast_input])
 decoder_layer = LSTM(20, activation='relu', return_sequences=True, kernel_initializer=Orthogonal())
 decoder_output = decoder_layer(decoder_input)
 dense_input = Dropout(0.2)(decoder_output)
-dense_layer = TimeDistributed(Dense(100, activation='relu'))
+dense_layer = TimeDistributed(Dense(300, activation='relu'))
 dense_output = dense_layer(dense_input)
 outputs = TimeDistributed(Dense(1))(dense_output)
 model = Model(inputs=[encoder_input, forecast_input], outputs=outputs, name="model")
@@ -201,7 +201,7 @@ print(model.summary)
 
 
 model.compile(loss='mse', optimizer='adam')
-num_epochs = 100
+num_epochs = 10
 model.fit([train_input_historic, train_input_weather], train_output, epochs=num_epochs, validation_data=
     ([validation_input_historic, validation_input_weather], validation_output), verbose=2, callbacks=[cp_callback])
 
@@ -215,17 +215,25 @@ prediction = scaler2.inverse_transform(prediction[:,:,0])
 observation = scaler2.inverse_transform(observation[:,:,0])
 
 
-max = max([np.max(prediction), np.max(observation)])
-min = min([np.min(prediction), np.min(observation)])
-fig, axes = plt.subplots(2,3)
-for i,j in [[0,0],[0,1],[0,2],[1,0],[1,1],[1,2]]:
-    axes[i,j].plot(observation[i*2+j])
-    axes[i,j].plot(prediction[i*2+j])
-    axes[i,j].set_title(str(test_days[i*2+j]))
+max = max([np.max(prediction[:12]), np.max(observation[:12])])
+min = min([np.min(prediction[:12]), np.min(observation[:12])])
+fig, axes = plt.subplots(3,4)
+for i,j in [[0,0],[0,1],[0,2], [0,3],[1,0],[1,1],[1,2],[1,3],[2,0],[2,1],[2,2],[2,3]]:
+    axes[i,j].plot(observation[i*3+j])
+    axes[i,j].plot(prediction[i*3+j])
+    axes[i,j].set_title(str(test_days[i*3+j]))
     axes[i, j].set_ylabel('kwatt hours')
     try:
         axes[i,j].set_ylim([min,max])
     except ValueError:
         pass
+    axes[i,j].get_xaxis().set_visible(False)
 axes[0,0].legend(['observation', 'prediction'])
 plt.show()
+
+
+
+# print average error for all 10% of tests
+print('Average hourly error in kwatt hours')
+error = np.mean(np.abs(observation-prediction))
+print(error)
