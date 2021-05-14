@@ -190,7 +190,7 @@ encoder_hidden_output = encoder_layer_1(encoder_input)
 decoder_input = RepeatVector(24)(encoder_hidden_output)
 decoder_input = Dropout(0.2)(decoder_input)
 decoder_input = Concatenate(axis=2)([decoder_input, forecast_input])
-decoder_layer = LSTM(20, activation='relu', return_sequences=True, kernel_initializer=Orthogonal())
+decoder_layer = LSTM(600, activation='relu', return_sequences=True, kernel_initializer=Orthogonal())
 decoder_output = decoder_layer(decoder_input)
 dense_input = Dropout(0.2)(decoder_output)
 dense_layer = TimeDistributed(Dense(300, activation='relu'))
@@ -201,7 +201,7 @@ print(model.summary)
 
 
 model.compile(loss='mse', optimizer='adam')
-num_epochs = 10
+num_epochs = 50
 model.fit([train_input_historic, train_input_weather], train_output, epochs=num_epochs, validation_data=
     ([validation_input_historic, validation_input_weather], validation_output), verbose=2, callbacks=[cp_callback])
 
@@ -215,25 +215,31 @@ prediction = scaler2.inverse_transform(prediction[:,:,0])
 observation = scaler2.inverse_transform(observation[:,:,0])
 
 
-max = max([np.max(prediction[:12]), np.max(observation[:12])])
-min = min([np.min(prediction[:12]), np.min(observation[:12])])
-fig, axes = plt.subplots(3,4)
-for i,j in [[0,0],[0,1],[0,2], [0,3],[1,0],[1,1],[1,2],[1,3],[2,0],[2,1],[2,2],[2,3]]:
-    axes[i,j].plot(observation[i*3+j])
-    axes[i,j].plot(prediction[i*3+j])
-    axes[i,j].set_title(str(test_days[i*3+j]))
-    axes[i, j].set_ylabel('kwatt hours')
-    try:
-        axes[i,j].set_ylim([min,max])
-    except ValueError:
-        pass
-    axes[i,j].get_xaxis().set_visible(False)
-axes[0,0].legend(['observation', 'prediction'])
-plt.show()
+for x in range(4):
+    kw_max = max([np.max(prediction[x:x+12]), np.max(observation[x:x+12])])
+    kw_min = min([np.min(prediction[x:x+12]), np.min(observation[x:x+12])])
+    fig, axes = plt.subplots(3,4)
+    for i,j in [[0,0],[0,1],[0,2], [0,3],[1,0],[1,1],[1,2],[1,3],[2,0],[2,1],[2,2],[2,3]]:
+        axes[i,j].plot(observation[x+i*3+j])
+        axes[i,j].plot(prediction[x+i*3+j])
+        axes[i,j].set_title(str(test_days[x+i*3+j]))
+        if j==0:
+            axes[i, j].set_ylabel('kwatt hours')
+        try:
+            axes[i,j].set_ylim([kw_min,kw_max])
+        except ValueError:
+            pass
+        axes[i,j].get_xaxis().set_visible(False)
+    axes[0,0].legend(['observation', 'prediction'])
+    plt.show()
 
 
 
 # print average error for all 10% of tests
 print('Average hourly error in kwatt hours')
 error = np.mean(np.abs(observation-prediction))
+print(error)
+# print rms error
+print('RMS error in kwatt hours')
+error = np.sqrt(np.mean(np.square(observation-prediction)))
 print(error)
