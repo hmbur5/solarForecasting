@@ -1,0 +1,214 @@
+{
+  "axes": [
+    {
+      "scale": "x",
+      "title": "time",
+      "type": "x"
+    },
+    {
+      "scale": "y",
+      "title": "kwatts",
+      "type": "y"
+    }
+  ],
+  "data": [
+    {
+      "name": "table",
+      "values": [
+        {
+          "col": "prediction",
+          "idx": 1621051200000,
+          "val": 1.4430103302001953
+        },
+        {
+          "col": "prediction",
+          "idx": 1621054800000,
+          "val": 0.9588375687599182
+        },
+        {
+          "col": "prediction",
+          "idx": 1621058400000,
+          "val": 0.2236151546239853
+        },
+        {
+          "col": "prediction",
+          "idx": 1621062000000,
+          "val": 0.2665471136569977
+        },
+        {
+          "col": "prediction",
+          "idx": 1621065600000,
+          "val": 0.015404053963720798
+        },
+        {
+          "col": "prediction",
+          "idx": 1621069200000,
+          "val": 0.0017616337863728404
+        },
+        {
+          "col": "prediction",
+          "idx": 1621072800000,
+          "val": 2.8940963602508418e-05
+        },
+        {
+          "col": "prediction",
+          "idx": 1621076400000,
+          "val": 1.6360590961994603e-05
+        },
+        {
+          "col": "prediction",
+          "idx": 1621080000000,
+          "val": 9.538413905829657e-06
+        },
+        {
+          "col": "prediction",
+          "idx": 1621083600000,
+          "val": 7.884488150011748e-05
+        },
+        {
+          "col": "prediction",
+          "idx": 1621087200000,
+          "val": 0.0002924476866610348
+        },
+        {
+          "col": "prediction",
+          "idx": 1621090800000,
+          "val": 0.00039933811058290303
+        },
+        {
+          "col": "prediction",
+          "idx": 1621094400000,
+          "val": 0.0
+        },
+        {
+          "col": "prediction",
+          "idx": 1621098000000,
+          "val": 0.0
+        },
+        {
+          "col": "prediction",
+          "idx": 1621101600000,
+          "val": 0.0
+        },
+        {
+          "col": "prediction",
+          "idx": 1621105200000,
+          "val": 0.0
+        },
+        {
+          "col": "prediction",
+          "idx": 1621108800000,
+          "val": 0.0017980266129598022
+        },
+        {
+          "col": "prediction",
+          "idx": 1621112400000,
+          "val": 0.05323368310928345
+        },
+        {
+          "col": "prediction",
+          "idx": 1621116000000,
+          "val": 0.27482858300209045
+        },
+        {
+          "col": "prediction",
+          "idx": 1621119600000,
+          "val": 1.0505067110061646
+        },
+        {
+          "col": "prediction",
+          "idx": 1621123200000,
+          "val": 1.806396484375
+        },
+        {
+          "col": "prediction",
+          "idx": 1621126800000,
+          "val": 2.2121405601501465
+        },
+        {
+          "col": "prediction",
+          "idx": 1621130400000,
+          "val": 2.349013328552246
+        },
+        {
+          "col": "prediction",
+          "idx": 1621134000000,
+          "val": 2.35056734085083
+        }
+      ]
+    }
+  ],
+  "height": 200,
+  "legends": [],
+  "marks": [
+    {
+      "from": {
+        "data": "table",
+        "transform": [
+          {
+            "keys": [
+              "data.col"
+            ],
+            "type": "facet"
+          }
+        ]
+      },
+      "marks": [
+        {
+          "properties": {
+            "enter": {
+              "stroke": {
+                "field": "data.col",
+                "scale": "color"
+              },
+              "strokeWidth": {
+                "value": 2
+              },
+              "x": {
+                "field": "data.idx",
+                "scale": "x"
+              },
+              "y": {
+                "field": "data.val",
+                "scale": "y"
+              }
+            }
+          },
+          "type": "line"
+        }
+      ],
+      "type": "group"
+    }
+  ],
+  "padding": "auto",
+  "scales": [
+    {
+      "domain": {
+        "data": "table",
+        "field": "data.idx"
+      },
+      "name": "x",
+      "range": "width",
+      "type": "time"
+    },
+    {
+      "domain": {
+        "data": "table",
+        "field": "data.val"
+      },
+      "name": "y",
+      "nice": true,
+      "range": "height"
+    },
+    {
+      "domain": {
+        "data": "table",
+        "field": "data.col"
+      },
+      "name": "color",
+      "range": "category20",
+      "type": "ordinal"
+    }
+  ],
+  "width": 450
+}
