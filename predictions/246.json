@@ -1,0 +1,214 @@
+{
+  "axes": [
+    {
+      "scale": "x",
+      "title": "time",
+      "type": "x"
+    },
+    {
+      "scale": "y",
+      "title": "kwatts",
+      "type": "y"
+    }
+  ],
+  "data": [
+    {
+      "name": "table",
+      "values": [
+        {
+          "col": "prediction",
+          "idx": 1621051219000,
+          "val": 0.5492559671401978
+        },
+        {
+          "col": "prediction",
+          "idx": 1621054819000,
+          "val": 0.30005601048469543
+        },
+        {
+          "col": "prediction",
+          "idx": 1621058419000,
+          "val": 0.060652583837509155
+        },
+        {
+          "col": "prediction",
+          "idx": 1621062019000,
+          "val": 0.0926099643111229
+        },
+        {
+          "col": "prediction",
+          "idx": 1621065619000,
+          "val": 0.004880898632109165
+        },
+        {
+          "col": "prediction",
+          "idx": 1621069219000,
+          "val": 0.0010401216568425298
+        },
+        {
+          "col": "prediction",
+          "idx": 1621072819000,
+          "val": 2.128711639670655e-05
+        },
+        {
+          "col": "prediction",
+          "idx": 1621076419000,
+          "val": 1.6831381799420342e-05
+        },
+        {
+          "col": "prediction",
+          "idx": 1621080019000,
+          "val": 9.236138794221915e-06
+        },
+        {
+          "col": "prediction",
+          "idx": 1621083619000,
+          "val": 6.22447332716547e-05
+        },
+        {
+          "col": "prediction",
+          "idx": 1621087219000,
+          "val": 0.00040490826359018683
+        },
+        {
+          "col": "prediction",
+          "idx": 1621090819000,
+          "val": 0.0002040269027929753
+        },
+        {
+          "col": "prediction",
+          "idx": 1621094419000,
+          "val": 0.0
+        },
+        {
+          "col": "prediction",
+          "idx": 1621098019000,
+          "val": 0.0
+        },
+        {
+          "col": "prediction",
+          "idx": 1621101619000,
+          "val": 0.0
+        },
+        {
+          "col": "prediction",
+          "idx": 1621105219000,
+          "val": 0.00032240315340459347
+        },
+        {
+          "col": "prediction",
+          "idx": 1621108819000,
+          "val": 0.0012842058204114437
+        },
+        {
+          "col": "prediction",
+          "idx": 1621112419000,
+          "val": 0.08656254410743713
+        },
+        {
+          "col": "prediction",
+          "idx": 1621116019000,
+          "val": 0.4670371413230896
+        },
+        {
+          "col": "prediction",
+          "idx": 1621119619000,
+          "val": 0.8031482696533203
+        },
+        {
+          "col": "prediction",
+          "idx": 1621123219000,
+          "val": 0.9702255725860596
+        },
+        {
+          "col": "prediction",
+          "idx": 1621126819000,
+          "val": 1.0082321166992188
+        },
+        {
+          "col": "prediction",
+          "idx": 1621130419000,
+          "val": 0.953704297542572
+        },
+        {
+          "col": "prediction",
+          "idx": 1621134019000,
+          "val": 0.8923647403717041
+        }
+      ]
+    }
+  ],
+  "height": 200,
+  "legends": [],
+  "marks": [
+    {
+      "from": {
+        "data": "table",
+        "transform": [
+          {
+            "keys": [
+              "data.col"
+            ],
+            "type": "facet"
+          }
+        ]
+      },
+      "marks": [
+        {
+          "properties": {
+            "enter": {
+              "stroke": {
+                "field": "data.col",
+                "scale": "color"
+              },
+              "strokeWidth": {
+                "value": 2
+              },
+              "x": {
+                "field": "data.idx",
+                "scale": "x"
+              },
+              "y": {
+                "field": "data.val",
+                "scale": "y"
+              }
+            }
+          },
+          "type": "line"
+        }
+      ],
+      "type": "group"
+    }
+  ],
+  "padding": "auto",
+  "scales": [
+    {
+      "domain": {
+        "data": "table",
+        "field": "data.idx"
+      },
+      "name": "x",
+      "range": "width",
+      "type": "time"
+    },
+    {
+      "domain": {
+        "data": "table",
+        "field": "data.val"
+      },
+      "name": "y",
+      "nice": true,
+      "range": "height"
+    },
+    {
+      "domain": {
+        "data": "table",
+        "field": "data.col"
+      },
+      "name": "color",
+      "range": "category20",
+      "type": "ordinal"
+    }
+  ],
+  "width": 450
+}

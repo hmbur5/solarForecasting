@@ -15,7 +15,7 @@ nomi = pg.Nominatim('AU')
 # solar data downloaded from https://www.ausgrid.com.au/Industry/Our-Research/Data-to-share/Solar-home-electricity-data
 # opening solar data file, and getting data for customers
 customerDict = {}
-# load customer locations dictionary
+# load customer locations dictionary, with first element place name, second element postcode
 try:
     customer_locations = np.load('data/customer_locations.npy',allow_pickle='TRUE').item()
 except Exception as e:
@@ -42,7 +42,10 @@ with open('data/2012-2013 Solar home electricity data v2.csv', "r") as csv_file:
                 customer_capacity[lines[0]]
             except KeyError:
                 customer_capacity[lines[0]]= lines[1]
+                print(lines[2])
+                customer_locations[lines[0]] = (customer_locations[lines[0]], lines[2])
                 np.save('data/customer_capacity.npy', customer_capacity)
+                np.save('data/customer_locations.npy', customer_locations)
 
 for customer in customerDict.keys():
     customerList = customerDict[customer]
