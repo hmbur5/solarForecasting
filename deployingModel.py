@@ -123,7 +123,7 @@ for customer_no in range(1, 301):
         times.append(current_day+timedelta(hours=i))
     df['times'] = times
     current_hour = datetime.now().replace(microsecond=0, second=0, minute=0)
-    mask = (df['times'] >= current_hour) & (df['times'] < current_hour+timedelta(hours=24))
+    mask = (df['times'] >= current_hour) & (df['times'] <= current_hour+timedelta(hours=24))
     df = df.loc[mask]
     df = df.set_index(pd.DatetimeIndex(df['times']))
 

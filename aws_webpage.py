@@ -50,7 +50,7 @@ def index():
     customer_locations = np.load('data/customer_locations.npy', allow_pickle='TRUE').item()
     customer_capacity = np.load('data/customer_capacity.npy', allow_pickle='TRUE').item()
 
-    for customer_no in range(1,3):
+    for customer_no in range(1,301):
         # get prediction graph
         with open('predictions/'+str(customer_no)+'.json') as json_file:
             vis = json.load(json_file)
