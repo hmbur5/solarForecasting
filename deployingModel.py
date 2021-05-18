@@ -14,11 +14,12 @@ import vincent
 import pandas as pd
 from socket import *
 import time
+import pickle
 
 # weather data from https://www.worldweatheronline.com/developer/api/docs/historical-weather-api.aspx
 # use api to download historical weather data from the same place and time
-keys = ['f2f090e1b01d4d7ea1435335211404', 'd6c47801209e43a6b2150339211105', 'd901813a0ad147ca829234002210505', 'a4e8b13df3d34c208ea22145210605']
-api_key = keys[0]
+keys = ['f2f090e1b01d4d7ea1435335211404', 'd6c47801209e43a6b2150339211105', 'd901813a0ad147ca829234002210505', 'a4e8b13df3d34c208ea22145210605', '2263df3f6e87470d918231008211705']
+api_key = keys[4]
 
 
 # define model
@@ -43,6 +44,8 @@ model.load_weights('training/cp.ckpt')
 
 customer_locations = np.load('data/customer_locations.npy',allow_pickle='TRUE').item()
 customer_capacity = np.load('data/customer_capacity.npy',allow_pickle='TRUE').item()
+
+customer_predictions = {}
 
 for customer_no in range(1, 301):
 
@@ -117,7 +120,7 @@ for customer_no in range(1, 301):
     df = pd.DataFrame()
     df['prediction'] = vals
     current_day = datetime.today()
-    current_day = current_day.replace(hour=0, minute=0)
+    current_day = current_day.replace(hour=0, minute=0, second=0, microsecond=0)
     times = []
     for i in range(48):
         times.append(current_day+timedelta(hours=i))
@@ -128,11 +131,31 @@ for customer_no in range(1, 301):
     df = df.set_index(pd.DatetimeIndex(df['times']))
 
 
+    customer_predictions[customer_no] = df
+
+
     line = vincent.Line(df['prediction'], width = 450, height=200)
     line.axis_titles(x='time', y='kwatts')
     line.to_json('predictions/'+str(customer_no)+'.json')
 
 
 
+# get superimposition of all customers in a region
+with open('data/electorates.pkl', 'rb') as f:
+    polygons = pickle.load(f)
 
+count = 0
+for polygon, customers in polygons:
+    count+=1
+    if len(customers) ==0:
+        continue
+    polygon_df = customer_predictions[customers[0]]
+    for customer_no in customers[1:]:
+        polygon_df['to_add'] = customer_predictions[customer_no]['prediction']
+        polygon_df['prediction'] = polygon_df.loc[:,['prediction','to_add']].sum(axis=1)
+
+
+    line = vincent.Line(polygon_df['prediction'], width=450, height=200)
+    line.axis_titles(x='time', y='kwatts')
+    line.to_json('predictions/polygon' + str(count) + '.json')
 
