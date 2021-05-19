@@ -19,7 +19,7 @@ import pickle
 # weather data from https://www.worldweatheronline.com/developer/api/docs/historical-weather-api.aspx
 # use api to download historical weather data from the same place and time
 keys = ['f2f090e1b01d4d7ea1435335211404', 'd6c47801209e43a6b2150339211105', 'd901813a0ad147ca829234002210505', 'a4e8b13df3d34c208ea22145210605', '2263df3f6e87470d918231008211705']
-api_key = keys[4]
+api_key = keys[2]
 
 
 # define model
@@ -145,22 +145,27 @@ with open('data/electorates.pkl', 'rb') as f:
     polygons = pickle.load(f)
 
 count = 0
-for polygon, customers in polygons:
+for element in polygons:
+    polygon = element[0]
+    customers = element[1]
     count+=1
     if len(customers) ==0:
         continue
     polygon_df = customer_predictions[customers[0]]
+    new_polygon_df = pd.DataFrame()
+    new_polygon_df['prediction'] = polygon_df['prediction']
+    new_polygon_df['times'] = polygon_df['times']
+    new_polygon_df.set_index(pd.DatetimeIndex(new_polygon_df['times']))
     for customer_no in customers[1:]:
-        polygon_df['to_add'] = customer_predictions[customer_no]['prediction']
-        polygon_df['prediction'] = polygon_df.loc[:,['prediction','to_add']].sum(axis=1)
+        new_polygon_df['to_add'] = customer_predictions[customer_no]['prediction']
+        new_polygon_df['prediction'] = new_polygon_df.loc[:,['prediction','to_add']].sum(axis=1)
 
 
-    line = vincent.Line(polygon_df['prediction'], width=450, height=200)
+    line = vincent.Line(new_polygon_df['prediction'], width=450, height=200)
     line.axis_titles(x='time', y='kwatts')
     line.to_json('predictions/polygon' + str(count) + '.json')
 
-    max_gen = max(polygon_df['prediction'], axis=1).item()
-    print(max_gen)
+    max_gen = max(new_polygon_df['prediction'])
 
     polygons[count-1] = [polygon, customers, max_gen]
 

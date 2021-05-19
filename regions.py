@@ -34,10 +34,9 @@ def getRegions(customer_coordinates):
         new_coords_list = []
         for element in coords_list:
             new_coords_list.append([element[0],element[1]])
-        polygons.append([new_coords_list, contained])
+        polygons.append([new_coords_list, contained, None])
 
     with open('data/electorates.pkl', 'wb') as f:
         pickle.dump(polygons, f)
 
     return polygons
-
