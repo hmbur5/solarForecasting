@@ -49,7 +49,7 @@ def index():
                    zoom_start=8)  # zoom 6 displays all of nsw centred on sydney, might want to be closer for detail view
     fg = folium.FeatureGroup(name='Solar panel locations', show=False)
     folium_map.add_child(fg)
-    marker_cluster = MarkerCluster(showCoverageOnHover=False).add_to(fg)
+    marker_cluster = MarkerCluster(showCoverageOnHover=False, maxClusterRadius=0.001).add_to(fg)
 
 
 
@@ -176,5 +176,5 @@ def index():
 
 
 if __name__ == '__main__':
-    app.run(host="127.0.0.1", port="8090", threaded=True, debug=False, use_reloader=False)
-    #app.run(host="0.0.0.0", port="80", threaded=True, debug=False, use_reloader=False)
+    #app.run(host="127.0.0.1", port="8090", threaded=True, debug=False, use_reloader=False)
+    app.run(host="0.0.0.0", port="80", threaded=True, debug=False, use_reloader=False)

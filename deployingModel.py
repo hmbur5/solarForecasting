@@ -159,3 +159,10 @@ for polygon, customers in polygons:
     line.axis_titles(x='time', y='kwatts')
     line.to_json('predictions/polygon' + str(count) + '.json')
 
+    max_gen = max(polygon_df['prediction'], axis=1).item()
+    print(max_gen)
+
+    polygons[count-1] = [polygon, customers, max_gen]
+
+with open('data/electorates.pkl', 'wb') as f:
+    pickle.dump(polygons, f)
