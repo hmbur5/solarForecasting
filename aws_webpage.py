@@ -15,6 +15,7 @@ import apscheduler
 from folium_jsbutton import JsButton
 from folium.plugins import MarkerCluster
 import pickle
+import random
 
 
 def updatePredictions():
@@ -44,7 +45,7 @@ def index():
 
     start_coords = (46.9540700, 142.7360300)
     # creating the initial map
-    folium_map = folium.Map(location=[-33.3438627, 151.4919677], tiles="Stamen Terrain",
+    folium_map = folium.Map(location=[-33.3438627, 151.4919677], tiles="cartodbpositron",
                    zoom_start=8)  # zoom 6 displays all of nsw centred on sydney, might want to be closer for detail view
     fg = folium.FeatureGroup(name='Solar panel locations', show=False)
     folium_map.add_child(fg)
@@ -87,6 +88,13 @@ def index():
 
 
     # regions
+    fg1 = folium.FeatureGroup(name='Regions', show=False)
+    folium_map.add_child(fg1)
+
+    # colouring in
+    fg2 = folium.FeatureGroup(name='Heat map', show=False)
+    folium_map.add_child(fg2)
+
     with open('data/electorates.pkl', 'rb') as f:
         polygons = pickle.load(f)
 
@@ -110,11 +118,10 @@ def index():
                       }
         # end GeoJson - coordinates need to go above here
 
-        style_function = lambda x: {'fillOpacity': 0}
         js = folium.GeoJson(
             regionJson,  # GeoJson file to use
             name="Regions",
-            style_function = style_function,
+            style_function = lambda x: {'color': 'black', 'fillOpacity': 0},
             #tooltip=folium.GeoJsonTooltip(  # hover tooltip
             #    fields=['name', 'data'],  # variables, properties from GeoJson file
             #    aliases=['Region: ', 'Generator Capacity'],  # titles for properties
@@ -128,13 +135,26 @@ def index():
             js.add_child(folium.Popup(max_width=550).add_child(folium.Vega(vis, width=550, height=250)))
         except:
             pass
-        js.add_to(folium_map)
+        js.add_to(fg1)
+
+        js2 = folium.GeoJson(
+            regionJson,  # GeoJson file to use
+            name="Regions",
+            style_function=lambda x: {'color': 'black', 'fillOpacity': random.uniform(0, 0.5), 'fillColor': 'green'},
+
+        )
+        js2.add_to(fg2)
 
 
         #
         #js.add_to(folium_map)  # adding GeoJson with popup data to the map
 
         #print(js)
+
+
+
+
+
 
     folium.LayerControl().add_to(folium_map)
 
