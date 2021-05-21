@@ -73,6 +73,7 @@ for customer_no in range(1, 301):
                          dataset['tempC'], dataset['visibility']])
 
 
+
     vals = []
 
     for i in range(2):
@@ -80,6 +81,11 @@ for customer_no in range(1, 301):
 
         weather_data_today = weather_data[:,0+i*24:24+i*24].transpose()
         weather_forecast[0:24, 0:7] = weather_data_today
+
+        # add end of tomorrow's weather forecast if that is not given (not needed for 24h prediction, but for the shape of the model)
+        if len(weather_forecast) <24:
+            weather_forecast.append(weather_forecast[-1,:])
+
         for hour in range(24):
             # adding boolean for whether sun is up
             currentTime = datetime.strptime(str(hour)+':00', '%H:%M').time()
