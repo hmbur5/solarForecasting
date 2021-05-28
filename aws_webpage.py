@@ -111,7 +111,6 @@ def index():
 
         # add maximum if solar panels exist in region
         try:
-            print(len(polygons[i]))
             max_in_polygon.append(polygons[i][2])
         except IndexError:
             max_in_polygon.append(0)
