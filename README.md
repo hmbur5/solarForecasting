@@ -11,4 +11,4 @@ Our model was implemented using historic weather and corresponding solar power g
 
 This model was deployed using AWS, and a webpage was made to access this information easily such that users can identify locations where additional energy will be required.
 
-<a href="https://drive.google.com/uc?export=view&id=1tRKF9aDC9HqLUsv3JGMEbBbEYogiZ_Wu"><img src="https://drive.google.com/uc?export=view&id=1tRKF9aDC9HqLUsv3JGMEbBbEYogiZ_Wu" style="width: 500px; max-width: 100%; height: auto" title="Click for the larger version." /></a>
+![alt text](https://drive.google.com/uc?export=view&id=1tRKF9aDC9HqLUsv3JGMEbBbEYogiZ_Wu)
