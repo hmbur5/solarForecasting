@@ -6,6 +6,7 @@ The objective of this project was to create a model that can predict the future 
 
 Our model was implemented using historic weather and corresponding solar power generation data, which we used to train and evaluate an LSTM. Overall, the model had an average absolute error of 0.063 kWatts
 
-![image](https://drive.google.com/uc?export=view&id=1cS_zkmjV5GF8E_4peYlHGjVCGcWtbOQf)
+![alt text](https://github.com/hmbur5/solarForecasting/blob/main/results.png?raw=true)
+
 
 This model was deployed using AWS, and a webpage was made to access this information easily such that users can identify locations where additional energy will be required.
